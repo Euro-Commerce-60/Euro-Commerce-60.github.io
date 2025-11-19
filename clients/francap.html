@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Bandeau d'actualités — Défilement complet</title>
+<style>
+  :root{
+    --bg1: #041428;
+    --bg2: #0f4c81;
+    --accent: #ffd166;
+    --text: #ffffff;
+    --muted: rgba(255,255,255,0.85);
+  }
+
+  body{
+    margin:0;
+    font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    background:#07101a;
+  }
+
+  /* Bandeau collé en haut */
+  .ticker-wrapper{
+    position:fixed;
+    top:0;
+    left:0;
+    width:100%;
+    z-index:999;
+    border-radius:0;
+    overflow:hidden;
+    background: linear-gradient(90deg, var(--bg1), var(--bg2));
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+  }
+
+  /* Zone défilante */
+  .ticker-viewport{
+    position:relative;
+    height:70px;
+    display:flex;
+    align-items:center;
+    overflow:hidden;
+    padding:10px 0;
+  }
+
+  .ticker-track{
+    display:flex;
+    gap:24px;
+    align-items:center;
+    will-change: transform;
+  }
+
+  /* Chaque bloc (item) compact */
+  .ticker-item{
+    display:inline-flex;
+    flex-direction:column;
+    min-width:300px;
+    max-width:450px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+    padding:8px 12px;
+    border-radius:8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.02);
+    white-space: normal;
+  }
+
+  /* Date + titre sur une ligne */
+  .meta-title{
+    display:flex;
+    flex-wrap:nowrap;
+    align-items:center;
+    font-size:14px;
+    font-weight:600;
+    color:var(--text);
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+
+  .meta-title time{
+    font-weight:700;
+    color: var(--accent);
+    margin-right:6px;
+    flex-shrink:0;
+    white-space:nowrap;
+  }
+
+  .meta-title span{
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    flex:1;
+  }
+
+  .description{
+    margin-top:4px;
+    font-size:12px;
+    color:#e9eef6;
+    opacity:0.9;
+    font-style:italic;
+    line-height:1.2;
+    overflow:hidden;
+  }
+
+  .notice{
+    padding:8px 12px;
+    text-align:center;
+    color: #ffdddd;
+    font-weight:600;
+  }
+
+  a.article-link{ color:inherit; text-decoration:none; }
+  a.article-link:hover{ text-decoration:underline; color:var(--accent); }
+
+</style>
+</head>
+<body>
+
+<div class="ticker-wrapper" aria-live="polite">
+  <div class="ticker-viewport" id="viewport" title="Survolez pour mettre en pause">
+    <div class="ticker-track" id="track">
+      <div class="notice" id="loading">Chargement du flux…</div>
+    </div>
+  </div>
+</div>
+
+<script>
+(async function(){
+  const rssUrl = encodeURIComponent("https://actu.fr/rss.xml");
+  const proxy = `https://api.allorigins.win/raw?url=${rssUrl}`;
+  const trackEl = document.getElementById('track');
+  const loadingEl = document.getElementById('loading');
+  const viewport = document.getElementById('viewport');
+
+  const days = ["Dimanche","Lundi","Mardi","Mercredi","Jeudi","Vendredi","Samedi"];
+  const months = ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
+  function fmtDate(dateStr){
+    if(!dateStr) return '';
+    const d = new Date(dateStr);
+    if (isNaN(d)) return '';
+    const day = days[d.getDay()];
+    const dayNum = d.getDate();
+    const month = months[d.getMonth()];
+    const hours = String(d.getHours()).padStart(2,'0');
+    const mins = String(d.getMinutes()).padStart(2,'0');
+    return `${day} ${dayNum} ${month} ${hours}h${mins}`;
+  }
+
+  function createItemEl({title, link, description, pubDate}){
+    const item = document.createElement('div');
+    item.className = 'ticker-item';
+
+    const a = document.createElement('a');
+    a.className = 'article-link';
+    a.href = link || '#';
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+
+    const meta = document.createElement('div');
+    meta.className = 'meta-title';
+
+    const timeEl = document.createElement('time');
+    timeEl.textContent = fmtDate(pubDate);
+
+    const titleSpan = document.createElement('span');
+    titleSpan.textContent = title || 'Sans titre';
+
+    meta.appendChild(timeEl);
+    meta.appendChild(titleSpan);
+    a.appendChild(meta);
+
+    const desc = document.createElement('div');
+    desc.className = 'description';
+    desc.textContent = description || '';
+
+    item.appendChild(a);
+    item.appendChild(desc);
+    return item;
+  }
+
+  async function fetchRSS(){
+    try {
+      const r = await fetch(proxy);
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const text = await r.text();
+      const parser = new DOMParser();
+      const xml = parser.parseFromString(text, "application/xml");
+      if(xml.querySelector('parsererror')) throw new Error('Impossible de parser le XML');
+
+      const items = Array.from(xml.querySelectorAll('item'));
+      if(items.length === 0){
+        const entries = Array.from(xml.querySelectorAll('entry'));
+        return entries.map(e => ({
+          title: e.querySelector('title')?.textContent ?? '',
+          link: e.querySelector('link')?.getAttribute('href') ?? e.querySelector('link')?.textContent ?? '',
+          description: e.querySelector('summary')?.textContent ?? e.querySelector('content')?.textContent ?? '',
+          pubDate: e.querySelector('updated')?.textContent ?? e.querySelector('published')?.textContent ?? ''
+        }));
+      }
+
+      return items.map(it => ({
+        title: it.querySelector('title')?.textContent ?? '',
+        link: it.querySelector('link')?.textContent ?? it.querySelector('guid')?.textContent ?? '#',
+        description: it.querySelector('description')?.textContent ?? '',
+        pubDate: it.querySelector('pubDate')?.textContent ?? it.querySelector('atom\\:updated')?.textContent ?? ''
+      }));
+
+    } catch(err){
+      console.error('fetchRSS error', err);
+      throw err;
+    }
+  }
+
+  async function start(){
+    try {
+      const data = await fetchRSS();
+      if (!data || data.length === 0){
+        loadingEl.textContent = 'Aucun article trouvé.';
+        return;
+      }
+
+      trackEl.innerHTML = '';
+      for(const it of data){
+        const el = createItemEl(it);
+        trackEl.appendChild(el);
+      }
+
+      const spacer = document.createElement('div');
+      spacer.style.width = '20px';
+      spacer.style.flexShrink = '0';
+      trackEl.appendChild(spacer);
+
+      await new Promise(r=>requestAnimationFrame(()=>setTimeout(r,50)));
+
+      runAnimationLoop();
+
+    } catch(err){
+      trackEl.innerHTML = `<div class="notice">Impossible de charger le flux RSS.<br>Erreur: ${err.message}</div>`;
+    }
+  }
+
+  let currentAnimation = null;
+  const pauseMs = 1000;
+  const pixelsPerSecond = 50; // plus lent qu'avant
+
+  function runAnimationLoop(){
+    if(currentAnimation && typeof currentAnimation.cancel === 'function') currentAnimation.cancel();
+
+    const trackRect = trackEl.getBoundingClientRect();
+    const viewportRect = viewport.getBoundingClientRect();
+
+    const startX = viewportRect.width;
+    const endX = -trackRect.width;
+    const distance = startX - endX;
+    const duration = Math.max(3000,(distance/pixelsPerSecond)*1000);
+
+    trackEl.style.transform = `translateX(${startX}px)`;
+
+    currentAnimation = trackEl.animate(
+      [
+        { transform: `translateX(${startX}px)` },
+        { transform: `translateX(${endX}px)` }
+      ],
+      { duration, easing:'linear', fill:'forwards' }
+    );
+
+    viewport.onmouseenter = ()=>currentAnimation.pause();
+    viewport.onmouseleave = ()=>currentAnimation.play();
+
+    let touchPaused = false;
+    viewport.addEventListener('touchstart', (e)=>{
+      e.preventDefault();
+      if(currentAnimation.playState==='paused'){currentAnimation.play(); touchPaused=false;}
+      else{currentAnimation.pause(); touchPaused=true;}
+    }, {passive:false});
+
+    currentAnimation.onfinish = async()=>{
+      await new Promise(r=>setTimeout(r,pauseMs));
+      runAnimationLoop();
+    };
+  }
+
+  start();
+})();
+</script>
+
+</body>
+</html>
