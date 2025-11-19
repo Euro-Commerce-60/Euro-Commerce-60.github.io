@@ -20,18 +20,18 @@
   }
 
   /* Bandeau collé en haut */
-  .ticker-wrapper{
-    position:fixed;
-    top:0;
-    left:0;
-    width:100%;
-    z-index:999;
-    border-radius:0;
-    overflow:hidden;
-    background: linear-gradient(90deg, var(--bg1), var(--bg2));
-    border-bottom: 1px solid rgba(255,255,255,0.05);
-    box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+  .ticker-wrapper {
+    position: relative; /* ou simplement retirer la ligne position: fixed */
+    top: 0; /* plus nécessaire si relative */
+    width: 100%; /* prend toute la largeur disponible */
+    background-color: #1e1e1e; /* couleur du bandeau */
+    padding: 10px 0;
+    box-sizing: border-box;
+    overflow: hidden;
+    border-bottom: 1px solid #333; /* optionnel, pour séparer visuellement */
+    z-index: auto; /* plus besoin de superposer */
   }
+
 
   /* Zone défilante */
   .ticker-viewport{
@@ -111,16 +111,35 @@
   a.article-link{ color:inherit; text-decoration:none; }
   a.article-link:hover{ text-decoration:underline; color:var(--accent); }
 
+  .video-container {
+    width: 100%;
+    overflow: hidden;
+    margin: 10px 0; /* espace autour de la vidéo */
+  }
+
+  .video-container video {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
 </style>
 </head>
 <body>
 
-<div class="ticker-wrapper" aria-live="polite">
+<!-- <div class="ticker-wrapper" aria-live="polite">
   <div class="ticker-viewport" id="viewport" title="Survolez pour mettre en pause">
     <div class="ticker-track" id="track">
       <div class="notice" id="loading">Chargement du flux…</div>
     </div>
   </div>
+</div> -->
+
+<!-- Vidéo juste en dessous du bandeau -->
+<div class="video-container">
+  <video autoplay loop muted playsinline width="100%">
+    <source src="../assets/test-contenu-francap.mp4" type="video/mp4">
+    Votre navigateur ne supporte pas la vidéo.
+  </video>
 </div>
 
 <script>
