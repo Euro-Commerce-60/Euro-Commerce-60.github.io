@@ -10,7 +10,6 @@
     --bg2: #0f4c81;
     --accent: #ffd166;
     --text: #ffffff;
-    --muted: rgba(255,255,255,0.85);
   }
 
   body{
@@ -19,24 +18,18 @@
     background:#07101a;
   }
 
-  /* Bandeau collé en haut */
   .ticker-wrapper {
-    position: relative; /* ou simplement retirer la ligne position: fixed */
-    top: 0; /* plus nécessaire si relative */
-    width: 100%; /* prend toute la largeur disponible */
-    background-color: #1e1e1e; /* couleur du bandeau */
+    position: relative;
+    width: 100%;
+    background-color: #1e1e1e;
     padding: 10px 0;
     box-sizing: border-box;
     overflow: hidden;
-    border-bottom: 1px solid #333; /* optionnel, pour séparer visuellement */
-    z-index: auto; /* plus besoin de superposer */
+    border-bottom: 1px solid #333;
   }
 
-
-  /* Zone défilante */
   .ticker-viewport{
     position:relative;
-    height:70px;
     display:flex;
     align-items:center;
     overflow:hidden;
@@ -50,55 +43,47 @@
     will-change: transform;
   }
 
-  /* Chaque bloc (item) compact */
   .ticker-item{
     display:inline-flex;
     flex-direction:column;
-    min-width:300px;
-    max-width:450px;
+    min-width:0;
+    padding:12px 16px;
+    border-radius:10px;
     background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-    padding:8px 12px;
-    border-radius:8px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.02);
     border: 1px solid rgba(255,255,255,0.02);
-    white-space: normal;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.02);
   }
 
-  /* Date + titre sur une ligne */
+  /* Tout sur une ligne */
   .meta-title{
     display:flex;
     flex-wrap:nowrap;
     align-items:center;
-    font-size:14px;
-    font-weight:600;
+    font-size:26px;
+    font-weight:700;
     color:var(--text);
-    overflow:hidden;
-    text-overflow:ellipsis;
   }
 
   .meta-title time{
     font-weight:700;
     color: var(--accent);
-    margin-right:6px;
+    margin-right:10px;
     flex-shrink:0;
     white-space:nowrap;
   }
 
   .meta-title span{
-    white-space:nowrap;
-    overflow:hidden;
-    text-overflow:ellipsis;
     flex:1;
+    white-space:nowrap; /* tout sur la même ligne */
   }
 
   .description{
-    margin-top:4px;
-    font-size:12px;
+    margin-left:10px;
+    font-size:22px;
     color:#e9eef6;
-    opacity:0.9;
     font-style:italic;
-    line-height:1.2;
-    overflow:hidden;
+    opacity:0.9;
+    white-space:nowrap; /* tout sur la même ligne */
   }
 
   .notice{
@@ -114,7 +99,7 @@
   .video-container {
     width: 100%;
     overflow: hidden;
-    margin: 10px 0; /* espace autour de la vidéo */
+    margin: 10px 0;
   }
 
   .video-container video {
@@ -134,7 +119,6 @@
   </div>
 </div>
 
-<!-- Vidéo juste en dessous du bandeau -->
 <div class="video-container">
   <video autoplay loop muted playsinline width="100%">
     <source src="../assets/test-contenu-francap.mp4" type="video/mp4">
@@ -259,7 +243,7 @@
 
   let currentAnimation = null;
   const pauseMs = 1000;
-  const pixelsPerSecond = 50; // plus lent qu'avant
+  const pixelsPerSecond = 50;
 
   function runAnimationLoop(){
     if(currentAnimation && typeof currentAnimation.cancel === 'function') currentAnimation.cancel();
