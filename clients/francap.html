@@ -107,17 +107,23 @@
     width: 100%;
     height: auto;
   }
+
+  #chrono {
+    color: white;
+  }
 </style>
 </head>
 <body>
 
-<div class="ticker-wrapper" aria-live="polite">
+<!-- <div class="ticker-wrapper" aria-live="polite">
   <div class="ticker-viewport" id="viewport" title="Survolez pour mettre en pause">
     <div class="ticker-track" id="track">
       <div class="notice" id="loading">Chargement du flux…</div>
     </div>
   </div>
-</div>
+</div> -->
+
+<div id="chrono">00:00:00</div>
 
 <div class="video-container">
   <video autoplay loop muted playsinline width="100%">
@@ -284,6 +290,28 @@
 
   start();
 })();
+
+function lancerChronometre() {
+    let secondes = 0;
+    const affichage = document.getElementById("chrono");
+
+    setInterval(() => {
+        secondes++;
+
+        let h = Math.floor(secondes / 3600);
+        let m = Math.floor((secondes % 3600) / 60);
+        let s = secondes % 60;
+
+        // Mise en forme
+        h = h < 10 ? "0" + h : h;
+        m = m < 10 ? "0" + m : m;
+        s = s < 10 ? "0" + s : s;
+
+        affichage.textContent = `${h}:${m}:${s}`;
+    }, 1000);
+}
+
+lancerChronometre();
 </script>
 
 </body>
